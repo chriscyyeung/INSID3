@@ -10,6 +10,7 @@ from .suim import build as build_suim
 from .isaid import build as build_isaid
 from .permis import build as build_permis
 from .spair import build as build_spair
+from .lumpnav import build as build_lumpnav
 
 _BUILDERS = {
     'coco': build_coco,
@@ -22,6 +23,7 @@ _BUILDERS = {
     'isaid': build_isaid,
     'permis': build_permis,
     'spair': build_spair,
+    'lumpnav': build_lumpnav,
 }
 
 

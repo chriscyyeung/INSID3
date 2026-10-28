@@ -4,7 +4,7 @@ import argparse
 
 SUPPORTED_DATASETS = [
     "coco", "lvis", "pascal_part", "paco_part",
-    "isaid", "isic", "lung", "suim", "permis",
+    "isaid", "isic", "lung", "suim", "permis", "lumpnav",
 ]
 
 
@@ -80,7 +80,23 @@ def get_args_parser() -> argparse.ArgumentParser:
         "--fold",
         default=0,
         type=int,
-        help="Fold index: for COCO, LVIS, iSAID, PASCAL-Part, PACO-Part",
+        help="Fold index: for COCO, LVIS, iSAID, PASCAL-Part, PACO-Part, LumpNav",
+    )
+    parser.add_argument(
+        "--nonempty-targets-only", 
+        action="store_true",
+        help="LumpNav: skip validation frames whose tumour mask is empty"
+    )
+    parser.add_argument(
+        "--max-targets", 
+        default=0, 
+        type=int,
+        help="LumpNav: evaluate a random subset of this many validation frames (0 = all)"
+    )
+    parser.add_argument(
+        "--save-preds", 
+        action="store_true",
+        help="Save each predicted mask as a 0/255 PNG at the target's original size"
     )
 
     # Runtime

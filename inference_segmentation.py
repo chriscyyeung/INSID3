@@ -12,6 +12,7 @@ import numpy as np
 import torch
 import torch.nn.functional as F
 from torch.utils.data import DataLoader
+from PIL import Image
 from tqdm import tqdm
 
 import opts
@@ -59,6 +60,9 @@ def evaluate(args: argparse.Namespace, model: torch.nn.Module, log_file: str) ->
     loader = DataLoader(ds, batch_size=1, shuffle=False, num_workers=args.num_workers,
                         collate_fn=lambda x: x[0])
     meter = AverageMeter(args.dataset, ds.class_ids, device=args.device)
+    pred_dir = join(args.output_dir, 'pred_masks')
+    if args.save_preds:
+        os.makedirs(pred_dir, exist_ok=True)
 
     # ──────── Evaluation loop ────────
     pbar = tqdm(loader, ncols=80)
@@ -76,6 +80,11 @@ def evaluate(args: argparse.Namespace, model: torch.nn.Module, log_file: str) ->
         model.set_target(tgt_img)
         # Segment
         pred_mask = model.segment()
+        if args.save_preds:
+            w, h = tgt_img.size   # original frame size
+            pred_orig = F.interpolate(pred_mask.float()[None, None], size=(h, w), mode='nearest')[0, 0] > 0.5
+            name = batch.get('tgt_name', f'{idx:06d}')
+            Image.fromarray(pred_orig.cpu().numpy().astype(np.uint8) * 255).save(join(pred_dir, f'{name}.png'))
 
         tgt_mask = F.interpolate(
             tgt_mask.unsqueeze(0).unsqueeze(0).float(),
