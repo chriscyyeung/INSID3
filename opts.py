@@ -19,6 +19,12 @@ def get_args_parser() -> argparse.ArgumentParser:
         help="DINOv3 backbone size",
     )
     parser.add_argument(
+        "--encoder-weights",
+        default=None,
+        help="DINOv3 checkpoint to use instead of the default pretrain/ file "
+             "(e.g. a LoRA-merged backbone from train_lora_lumpnav.py)",
+    )
+    parser.add_argument(
         "--image-size",
         default=1024,
         type=int,

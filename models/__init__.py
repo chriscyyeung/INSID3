@@ -1,5 +1,7 @@
 """Model construction utilities for INSID3."""
 
+from __future__ import annotations
+
 import torch
 
 from models.insid3 import INSID3
@@ -17,12 +19,19 @@ _WEIGHTS = {
 }
 
 
-def _build_encoder(model_size: str = "large"):
-    return torch.hub.load(
-        "facebookresearch/dinov3",
-        _HUB_NAMES[model_size],
-        weights=_WEIGHTS[model_size],
-    )
+def _build_encoder(model_size: str = "large", weights: str | None = None):
+    if weights is None:
+        return torch.hub.load(
+            "facebookresearch/dinov3",
+            _HUB_NAMES[model_size],
+            weights=_WEIGHTS[model_size],
+        )
+    # Override checkpoint (e.g. a LoRA-merged backbone from train_lora_lumpnav.py), loaded strictly
+    # from disk. Hub's weights= would copy it into ~/.cache/torch/hub/checkpoints and reuse it by
+    # file name, so a retrained checkpoint with the same name would silently load stale weights.
+    encoder = torch.hub.load("facebookresearch/dinov3", _HUB_NAMES[model_size], pretrained=False)
+    encoder.load_state_dict(torch.load(weights, map_location="cpu"), strict=True)
+    return encoder
 
 
 def build_insid3(
@@ -36,8 +45,9 @@ def build_insid3(
     crf_size: int = 640,
     resize_to_orig_size: bool = True,
     device: str = "cuda",
+    encoder_weights: str | None = None,
 ):
-    encoder = _build_encoder(model_size)
+    encoder = _build_encoder(model_size, encoder_weights)
     model = INSID3(
         encoder=encoder,
         image_size=image_size,
@@ -65,4 +75,5 @@ def build_insid3_from_args(args):
         crf_size=args.crf_size,
         resize_to_orig_size=False,
         device=args.device,
+        encoder_weights=getattr(args, 'encoder_weights', None),
     )
